@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>測試站台冊</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#EDEFF2; --surface:#FFFFFF; --surface-2:#F6F7F9; --sunken:#E4E7EC;
+  --ink:#171C23; --ink-2:#414B57; --muted:#6B7684; --line:#D6DBE2; --line-2:#C3CAD4;
+  --accent:#0C7368; --accent-ink:#FFFFFF; --accent-soft:#D9EDE9;
+  --ok:#2C7A54; --warn:#9C6209; --crit:#B23A2F;
+  --shadow:0 1px 2px rgba(20,28,38,.06), 0 6px 18px -8px rgba(20,28,38,.18);
+  --radius:10px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#10141A; --surface:#181E26; --surface-2:#1E252E; --sunken:#0B0E13;
+    --ink:#E7ECF2; --ink-2:#BCC6D2; --muted:#8793A2; --line:#2A323D; --line-2:#3A4451;
+    --accent:#3BC9B4; --accent-ink:#06211E; --accent-soft:#16332F;
+    --ok:#5CC98E; --warn:#D9A03C; --crit:#E8756A;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10141A; --surface:#181E26; --surface-2:#1E252E; --sunken:#0B0E13;
+  --ink:#E7ECF2; --ink-2:#BCC6D2; --muted:#8793A2; --line:#2A323D; --line-2:#3A4451;
+  --accent:#3BC9B4; --accent-ink:#06211E; --accent-soft:#16332F;
+  --ok:#5CC98E; --warn:#D9A03C; --crit:#E8756A;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;
+  font-size:15px; line-height:1.5;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  -webkit-text-size-adjust:100%;
+}
+img{max-width:100%}
+[hidden]{display:none !important}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:4px}
+.mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- shell ---------- */
+.wrap{max-width:1240px;margin:0 auto;padding-inline:16px}
+.topbar{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:30;
+  background:color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter:saturate(1.4) blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.topbar-in{display:flex;align-items:center;gap:12px;padding-block:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:9px;margin-right:auto;min-width:0}
+.mark{width:26px;height:26px;flex:0 0 auto;border-radius:7px;background:var(--accent);display:grid;place-items:center;color:var(--accent-ink);font-weight:700;font-size:13px;font-family:"IBM Plex Mono",monospace}
+.brand h1{font-size:16px;font-weight:600;margin:0;letter-spacing:-.01em;white-space:nowrap}
+.sync{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ok);flex:0 0 auto}
+.dot.busy{background:var(--warn);animation:pulse 1s ease-in-out infinite}
+.dot.err{background:var(--crit)}
+.dot.idle{background:var(--line-2)}
+@keyframes pulse{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important}}
+
+/* ---------- buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;justify-content:center;
+  border:1px solid var(--line-2); background:var(--surface); color:var(--ink);
+  padding:7px 12px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:500;
+  transition:background .12s, border-color .12s;
+}
+.btn:hover{background:var(--surface-2)}
+.btn:active{transform:translateY(.5px)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--ink-2)}
+.btn.ghost:hover{background:var(--sunken)}
+.btn.danger{color:var(--crit);border-color:color-mix(in srgb,var(--crit) 40%, var(--line))}
+.btn.danger:hover{background:color-mix(in srgb,var(--crit) 10%, transparent)}
+.btn.sm{padding:5px 9px;font-size:13px}
+.btn.icon{padding:6px;width:32px;height:32px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* ---------- toolbar ---------- */
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-block:14px}
+.search{position:relative;flex:1 1 240px;min-width:0}
+.search input{
+  width:100%;padding:9px 12px 9px 34px;border-radius:9px;border:1px solid var(--line-2);
+  background:var(--surface);
+}
+.search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chip{
+  border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);
+  padding:5px 11px;border-radius:999px;cursor:pointer;font-size:13px;font-weight:500;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.chip .n{font-size:11px;opacity:.65;font-variant-numeric:tabular-nums}
+.chip .sysdot{width:8px;height:8px;border-radius:2px;flex:0 0 auto}
+
+/* ---------- cards ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px;padding-bottom:64px}
+.card{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;
+}
+.card.dim{opacity:.62}
+.card-head{display:flex;align-items:flex-start;gap:10px;padding:12px 12px 10px;border-bottom:1px solid var(--line)}
+.sysbar{width:3px;align-self:stretch;border-radius:2px;flex:0 0 auto}
+.card-title{min-width:0;flex:1}
+.card-title .nm{font-weight:600;font-size:15px;letter-spacing:-.01em;word-break:break-word}
+.meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;align-items:center}
+.tag{font-size:11px;font-weight:600;letter-spacing:.03em;padding:2px 7px;border-radius:5px;background:var(--sunken);color:var(--ink-2);text-transform:uppercase;font-family:"IBM Plex Mono",monospace}
+.tag.sys{color:var(--accent-ink)}
+.tag.cur{background:transparent;border:1px solid var(--line-2);color:var(--muted)}
+.state{font-size:11.5px;color:var(--muted);display:inline-flex;align-items:center;gap:5px}
+.card-acts{display:flex;gap:2px;flex:0 0 auto}
+.card-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:9px}
+.field{display:grid;grid-template-columns:52px 1fr auto;gap:8px;align-items:center;min-height:26px}
+.field > .k{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.val{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink-2);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+a.val{text-decoration:none;color:var(--accent)}
+a.val:hover{text-decoration:underline}
+.val.empty{color:var(--muted);opacity:.6;font-style:normal}
+.pairs{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-top:9px;border-top:1px dashed var(--line)}
+.pair{min-width:0}
+.pair .k{font-size:10.5px;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase;display:block;margin-bottom:2px}
+.pair .row{display:flex;align-items:center;gap:4px;min-width:0}
+.copyv{
+  font-family:"IBM Plex Mono",monospace;font-size:12.5px;background:none;border:0;padding:2px 0;
+  cursor:pointer;text-align:left;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  border-bottom:1px dotted var(--line-2);color:var(--ink-2);
+}
+.copyv:hover{color:var(--accent);border-bottom-color:var(--accent)}
+.note{font-size:13px;color:var(--ink-2);background:var(--surface-2);border-radius:7px;padding:7px 9px;white-space:pre-wrap;word-break:break-word}
+.eye{background:none;border:0;cursor:pointer;color:var(--muted);padding:2px;line-height:0;flex:0 0 auto}
+.eye:hover{color:var(--ink)}
+.icobtn{background:none;border:0;cursor:pointer;color:var(--muted);padding:3px;line-height:0;border-radius:5px;flex:0 0 auto}
+.icobtn:hover{color:var(--accent);background:var(--sunken)}
+
+/* ---------- empty / lock ---------- */
+.center-stage{min-height:70vh;display:grid;place-items:center;padding-block:32px}
+.panel{
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
+  padding:26px 24px;width:100%;max-width:420px;
+}
+.panel h2{margin:0 0 6px;font-size:19px;letter-spacing:-.015em}
+.panel p.lead{margin:0 0 18px;color:var(--muted);font-size:13.5px;line-height:1.55}
+.stack{display:flex;flex-direction:column;gap:12px}
+label.lbl{display:block;font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:5px;letter-spacing:.02em}
+.inp{
+  width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--line-2);background:var(--surface-2);
+}
+.inp:focus{background:var(--surface)}
+textarea.inp{min-height:64px;resize:vertical;font-family:inherit}
+.hint{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.5}
+.err{font-size:13px;color:var(--crit);margin-top:4px}
+.keyline{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.cbrow{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2)}
+.cbrow input{width:16px;height:16px;accent-color:var(--accent)}
+
+.empty{text-align:center;padding:48px 20px;color:var(--muted)}
+.empty h3{color:var(--ink);font-size:17px;margin:0 0 6px}
+.empty p{margin:0 auto 18px;max-width:34em;font-size:13.5px;line-height:1.6}
+
+/* ---------- modal ---------- */
+.scrim{position:fixed;inset:0;background:rgba(9,13,18,.55);z-index:50;display:grid;place-items:start center;overflow-y:auto;padding:24px 12px 60px}
+.modal{
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 20px 60px -12px rgba(0,0,0,.45);
+  width:100%;max-width:560px;margin-top:max(12px, env(safe-area-inset-top,0px));
+}
+.modal.wide{max-width:760px}
+.modal-head{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);border-radius:14px 14px 0 0;z-index:2}
+.modal-head h2{margin:0;font-size:16px;font-weight:600;flex:1;letter-spacing:-.01em}
+.modal-body{padding:18px}
+.modal-foot{display:flex;gap:8px;justify-content:flex-end;padding:14px 18px;border-top:1px solid var(--line);position:sticky;bottom:0;background:var(--surface);border-radius:0 0 14px 14px;flex-wrap:wrap}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-grid .full{grid-column:1/-1}
+@media (max-width:560px){.form-grid{grid-template-columns:1fr}.pairs{grid-template-columns:1fr}}
+fieldset.group{border:1px solid var(--line);border-radius:10px;padding:14px;margin:0 0 14px}
+fieldset.group legend{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:0 6px}
+
+/* ---------- settings sections ---------- */
+.sect{border-top:1px solid var(--line);padding-top:16px;margin-top:16px}
+.sect:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.sect h3{font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.rowbtns{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ---------- table for csv mapping ---------- */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:9px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{background:var(--surface-2);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:700}
+tr:last-child td{border-bottom:0}
+select.inp{appearance:auto}
+
+/* ---------- toast ---------- */
+#toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:80;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:max-content;max-width:calc(100vw - 32px)}
+.toast{background:var(--ink);color:var(--bg);padding:9px 15px;border-radius:999px;font-size:13.5px;box-shadow:0 8px 24px -8px rgba(0,0,0,.5);animation:rise .18s ease-out}
+.toast.bad{background:var(--crit);color:#fff}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}}
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+<div id="toasts" aria-live="polite"></div>
+
+<script>
+/* =========================================================================
+   測試站台冊 — 加密的靜態站台清單
+   資料以 AES-GCM 加密後存成 repo 裡的 data.enc，任何人爬到都只是亂碼。
+   ========================================================================= */
+
+const CFG_KEY = 'ts.cfg.v1';
+const SEC_KEY = 'ts.sec.v1';      // 以通關密碼加密後的 GitHub token
+const PWD_KEY = 'ts.pwd.v1';      // 選擇性：這台裝置記住的密碼
+const DATA_PATH = 'data.enc';
+const MAGIC = 'TSV1:';
+
+const DEFAULT_CFG = { owner: 'xd1104', repo: 'test-sites', branch: 'main' };
+
+const FIELDS = [
+  { k:'system',     label:'系統',        ph:'smm / smmv2 / cmm …', req:true },
+  { k:'name',       label:'站名 / 品牌',  ph:'例：uatmeta',         req:true },
+  { k:'currency',   label:'貨幣',        ph:'THB、VND、CNY…' },
+  { k:'status',     label:'狀態',        opts:['使用中','觀察中','停用'] },
+  { k:'frontendUrl',label:'前端網址',     ph:'https://…', full:true },
+  { k:'boUrl',      label:'BO 網址',      ph:'https://…', full:true },
+  { k:'feAccount',  label:'前台帳號' },
+  { k:'fePassword', label:'前台密碼', secret:true },
+  { k:'boAccount',  label:'BO 帳號' },
+  { k:'boPassword', label:'BO 密碼', secret:true },
+  { k:'note',       label:'備註', full:true, area:true },
+];
+
+const state = {
+  locked: true,
+  initializing: false,     // repo 裡還沒有 data.enc
+  key: null,               // CryptoKey
+  password: null,
+  data: { version:1, sites:[] },
+  sha: null,
+  cfg: loadCfg(),
+  token: '',
+  q: '',
+  sysFilter: 'ALL',
+  revealed: new Set(),
+  sync: { s:'idle', t:'' },
+  dirty: false,
+};
+
+/* ------------------------- 小工具 ------------------------- */
+const $ = (sel, root=document) => root.querySelector(sel);
+const el = (tag, props={}, kids=[]) => {
+  const n = document.createElement(tag);
+  for (const [k,v] of Object.entries(props)) {
+    if (k === 'class') n.className = v;
+    else if (k === 'html') n.innerHTML = v;
+    else if (k === 'text') n.textContent = v;
+    else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+    else if (v === true) n.setAttribute(k, '');
+    else if (v !== false && v != null) n.setAttribute(k, v);
+  }
+  for (const c of [].concat(kids)) if (c != null) n.append(c);
+  return n;
+};
+const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
+const nowISO = () => new Date().toISOString();
+const hhmm = (iso) => { try { return new Date(iso).toLocaleString('zh-TW',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); } catch { return ''; } };
+
+function toast(msg, bad=false){
+  const t = el('div',{class:'toast'+(bad?' bad':''),text:msg});
+  $('#toasts').append(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .25s'; setTimeout(()=>t.remove(),260); }, bad?3600:1900);
+}
+function store(k,v){ try{ v===null ? localStorage.removeItem(k) : localStorage.setItem(k, v); }catch{} }
+function read(k){ try{ return localStorage.getItem(k); }catch{ return null; } }
+function loadCfg(){ try{ return { ...DEFAULT_CFG, ...JSON.parse(read(CFG_KEY)||'{}') }; }catch{ return {...DEFAULT_CFG}; } }
+function saveCfg(){ store(CFG_KEY, JSON.stringify(state.cfg)); }
+
+const ICON = {
+  search:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+  gear:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.6 1.6 0 0 0 .32 1.77l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.6 1.6 0 0 0-1.77-.32 1.6 1.6 0 0 0-1 1.47V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9.1 19.4a1.6 1.6 0 0 0-1.77.32l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.6 1.6 0 0 0 4.82 15a1.6 1.6 0 0 0-1.47-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 8.9a1.6 1.6 0 0 0-.32-1.77l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.6 1.6 0 0 0 9 4.62 1.6 1.6 0 0 0 10 3.15V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.47 1.6 1.6 0 0 0 1.77-.32l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.6 1.6 0 0 0 19.4 9v0a1.6 1.6 0 0 0 1.47 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>',
+  edit:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+  copy:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+  ext:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7"/><path d="M10 14L21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>',
+  eye:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="2.6"/></svg>',
+  eyeoff:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M10.6 6.2A9.6 9.6 0 0 1 12 6c6.4 0 10 6 10 6a17 17 0 0 1-3.2 3.9M6.3 7.9A17 17 0 0 0 2 12s3.6 6 10 6a9.4 9.4 0 0 0 4-.86"/><path d="M3 3l18 18"/></svg>',
+  lock:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="11" rx="2.2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
+  plus:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  x:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+};
+
+/* ------------------------- 系統別配色 ------------------------- */
+function sysHue(s){
+  let h = 0; const str = (s||'?').toLowerCase().trim();
+  for (let i=0;i<str.length;i++) h = (h*31 + str.charCodeAt(i)) % 360;
+  return h;
+}
+function sysColors(s){
+  const h = sysHue(s);
+  const dark = matchMedia('(prefers-color-scheme: dark)').matches && document.documentElement.dataset.theme !== 'light'
+            || document.documentElement.dataset.theme === 'dark';
+  return dark
+    ? { bar:`hsl(${h} 58% 55%)`, bg:`hsl(${h} 40% 24%)`, fg:`hsl(${h} 70% 84%)` }
+    : { bar:`hsl(${h} 55% 42%)`, bg:`hsl(${h} 52% 38%)`, fg:'#fff' };
+}
+
+/* ------------------------- 加密 ------------------------- */
+const enc = new TextEncoder(), dec = new TextDecoder();
+function b64e(buf){ let s=''; const b=new Uint8Array(buf); for(let i=0;i<b.length;i++) s+=String.fromCharCode(b[i]); return btoa(s); }
+function b64d(str){ const s=atob(str.replace(/\s+/g,'')); const b=new Uint8Array(s.length); for(let i=0;i<s.length;i++) b[i]=s.charCodeAt(i); return b; }
+
+async function deriveKey(password, salt){
+  const base = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name:'PBKDF2', salt, iterations:250000, hash:'SHA-256' },
+    base, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']
+  );
+}
+async function encryptJSON(password, obj){
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv   = crypto.getRandomValues(new Uint8Array(12));
+  const key  = await deriveKey(password, salt);
+  const ct   = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, enc.encode(JSON.stringify(obj)));
+  const out  = new Uint8Array(16+12+ct.byteLength);
+  out.set(salt,0); out.set(iv,16); out.set(new Uint8Array(ct),28);
+  return MAGIC + b64e(out);
+}
+async function decryptJSON(password, payload){
+  const raw = payload.startsWith(MAGIC) ? payload.slice(MAGIC.length) : payload;
+  const buf = b64d(raw);
+  const salt = buf.slice(0,16), iv = buf.slice(16,28), ct = buf.slice(28);
+  const key = await deriveKey(password, salt);
+  const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, ct);
+  return JSON.parse(dec.decode(pt));
+}
+// token 用同一組密碼另外包一層，避免明文躺在瀏覽器裡
+async function sealToken(password, token){ return encryptJSON(password, { t: token }); }
+async function openToken(password, blob){ try { return (await decryptJSON(password, blob)).t || ''; } catch { return ''; } }
+
+/* ------------------------- GitHub ------------------------- */
+function ghHeaders(){
+  const h = { 'Accept':'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28' };
+  if (state.token) h['Authorization'] = 'Bearer ' + state.token;
+  return h;
+}
+function apiURL(path){ const c = state.cfg; return `https://api.github.com/repos/${c.owner}/${c.repo}${path}`; }
+
+async function fetchRemote(){
+  const url = apiURL(`/contents/${DATA_PATH}?ref=${encodeURIComponent(state.cfg.branch)}&_=${Date.now()}`);
+  const r = await fetch(url, { headers: ghHeaders(), cache:'no-store' });
+  if (r.status === 404) return { missing:true };
+  if (!r.ok) {
+    if (r.status === 403) throw new Error('GitHub 拒絕讀取（可能是未登入的呼叫次數用完了，等一小時或在設定填 token）');
+    if (r.status === 401) throw new Error('GitHub token 無效或過期');
+    throw new Error(`讀取失敗 HTTP ${r.status}`);
+  }
+  const j = await r.json();
+  return { sha: j.sha, text: dec.decode(b64d(j.content)) };
+}
+
+async function pushRemote(payloadText, message){
+  if (!state.token) throw new Error('沒有 GitHub token，無法儲存。到設定貼上 token。');
+  const body = {
+    message,
+    content: b64e(enc.encode(payloadText)),
+    branch: state.cfg.branch,
+  };
+  if (state.sha) body.sha = state.sha;
+  const r = await fetch(apiURL(`/contents/${DATA_PATH}`), {
+    method:'PUT', headers:{ ...ghHeaders(), 'Content-Type':'application/json' }, body: JSON.stringify(body)
+  });
+  if (r.status === 409 || r.status === 422) throw new Error('有人比你先存了。請重新整理載入最新版，再改一次。');
+  if (r.status === 401) throw new Error('GitHub token 無效或過期');
+  if (r.status === 403) throw new Error('這個 token 沒有寫入這個 repo 的權限');
+  if (!r.ok) throw new Error(`儲存失敗 HTTP ${r.status}`);
+  const j = await r.json();
+  state.sha = j.content.sha;
+}
+
+function setSync(s, t){ state.sync = { s, t: t || state.sync.t }; const n = $('#syncbox'); if (n) n.replaceWith(syncBox()); }
+
+async function save(message='更新站台資料'){
+  if (!state.key && !state.password) return;
+  setSync('busy','儲存中…');
+  try{
+    state.data.updatedAt = nowISO();
+    const payload = await encryptJSON(state.password, state.data);
+    await pushRemote(payload, message);
+    setSync('ok','已存 ' + hhmm(state.data.updatedAt));
+    toast('已存進 GitHub');
+  }catch(e){
+    setSync('err','沒存成功');
+    toast(e.message, true);
+    throw e;
+  }
+}
+
+/* ------------------------- 範例資料 ------------------------- */
+function seedSites(){
+  return [
+    { id:uid(), system:'smm', name:'範例：泰國站', currency:'THB', status:'使用中',
+      frontendUrl:'https://example-smm.test/', boUrl:'https://bo.example-smm.test/',
+      feAccount:'qateam0713', fePassword:'', boAccount:'', boPassword:'',
+      note:'這是範例列，按右上鉛筆改成你的資料，或用設定裡的「清除範例」一次刪掉。', example:true, updatedAt:nowISO() },
+    { id:uid(), system:'smmv2', name:'範例：越南站', currency:'VND', status:'觀察中',
+      frontendUrl:'https://example-smmv2.test/', boUrl:'https://bo.example-smmv2.test/',
+      feAccount:'', fePassword:'', boAccount:'', boPassword:'', note:'', example:true, updatedAt:nowISO() },
+    { id:uid(), system:'cmm', name:'範例：uatmeta', currency:'CNY', status:'使用中',
+      frontendUrl:'https://example-cmm.test/', boUrl:'https://bo.example-cmm.test/',
+      feAccount:'', fePassword:'', boAccount:'', boPassword:'',
+      note:'BO 多公司共用，Company 下拉只選 uatmeta。', example:true, updatedAt:nowISO() },
+  ];
+}
+
+/* =========================================================================
+   畫面
+   ========================================================================= */
+function render(){
+  const app = $('#app');
+  app.replaceChildren(state.locked ? lockView() : mainView());
+}
+
+/* ---------- 鎖定 / 初始化 ---------- */
+function lockView(){
+  const first = state.initializing;
+  const pw  = el('input',{type:'password',class:'inp',id:'pw',autocomplete:'current-password',placeholder:'通關密碼'});
+  const pw2 = el('input',{type:'password',class:'inp',id:'pw2',autocomplete:'new-password',placeholder:'再輸入一次'});
+  const errBox = el('div',{class:'err',hidden:true});
+  const remember = el('input',{type:'checkbox',id:'remember',checked:true});
+  const btn = el('button',{class:'btn primary',type:'submit',text:first?'建立資料庫':'解鎖'});
+
+  const form = el('form',{class:'stack', onsubmit:async (e)=>{
+    e.preventDefault();
+    errBox.hidden = true;
+    const p = pw.value;
+    if (!p){ errBox.textContent='請輸入密碼'; errBox.hidden=false; return; }
+    if (first){
+      if (p.length < 8){ errBox.textContent='密碼至少 8 個字，這是唯一一道鎖。'; errBox.hidden=false; return; }
+      if (p !== pw2.value){ errBox.textContent='兩次輸入不一樣'; errBox.hidden=false; return; }
+    }
+    btn.disabled = true; btn.textContent = '處理中…';
+    try{
+      if (first){
+        if (!state.token){
+          errBox.innerHTML = '要先有 GitHub token 才能把資料庫建到 repo 裡。點下面的「設定 repo / token」貼上。';
+          errBox.hidden = false; btn.disabled = false; btn.textContent = '建立資料庫'; return;
+        }
+        state.password = p;
+        state.data = { version:1, updatedAt:nowISO(), sites: seedSites() };
+        await save('建立站台資料庫');
+        store(SEC_KEY, await sealToken(state.password, state.token));
+        state.initializing = false;
+        state.locked = false;
+      } else {
+        const remote = await fetchRemote();
+        if (remote.missing){ state.initializing = true; render(); return; }
+        state.sha = remote.sha;
+        let obj;
+        try { obj = await decryptJSON(p, remote.text); }
+        catch { errBox.textContent='密碼不對'; errBox.hidden=false; btn.disabled=false; btn.textContent='解鎖'; return; }
+        state.password = p;
+        state.data = obj;
+        state.locked = false;
+        setSync('ok','已載入 ' + hhmm(obj.updatedAt));
+      }
+      const sealed = read(SEC_KEY);
+      if (sealed) state.token = await openToken(state.password, sealed);
+      if (remember.checked) store(PWD_KEY, state.password); else store(PWD_KEY, null);
+      render();
+    }catch(err){
+      errBox.textContent = err.message; errBox.hidden = false;
+      btn.disabled = false; btn.textContent = first?'建立資料庫':'解鎖';
+    }
+  }}, [
+    el('div',{}, [ el('label',{class:'lbl',for:'pw',text: first?'設定通關密碼':'通關密碼'}), pw ]),
+    first ? el('div',{}, [ el('label',{class:'lbl',for:'pw2',text:'確認密碼'}), pw2 ]) : null,
+    errBox,
+    el('label',{class:'cbrow',for:'remember'}, [ remember, el('span',{text:'在這台裝置記住密碼'}) ]),
+    btn,
+  ]);
+
+  return el('div',{class:'wrap'},[
+    el('div',{class:'center-stage'},[
+      el('div',{class:'panel'},[
+        el('div',{style:'display:flex;align-items:center;gap:10px;margin-bottom:14px'},[
+          el('span',{class:'mark',style:'width:32px;height:32px',html:ICON.lock}),
+          el('div',{},[
+            el('h2',{text:'測試站台冊'}),
+            el('div',{style:'font-size:12px;color:var(--muted)',text:`${state.cfg.owner}/${state.cfg.repo}`}),
+          ])
+        ]),
+        el('p',{class:'lead', text: first
+          ? '這個 repo 裡還沒有資料檔。設一組通關密碼，之後所有內容都用它加密；密碼只存在你和同事的腦袋裡，沒有人能幫你重設。'
+          : '資料是加密的。輸入通關密碼解開這份清單。'}),
+        form,
+        el('div',{class:'keyline'},[
+          el('span',{html:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>'}),
+          el('span',{text:'AES-256-GCM，密碼不會離開這台裝置'}),
+        ]),
+        el('div',{style:'margin-top:10px;text-align:center'},[
+          el('button',{class:'btn ghost sm',type:'button',text:'設定 repo / token',onclick:()=>openSettings(true)})
+        ])
+      ])
+    ])
+  ]);
+}
+
+/* ---------- 主畫面 ---------- */
+function syncBox(){
+  const map = { idle:['idle','待命'], busy:['busy',state.sync.t||'處理中…'], ok:['', state.sync.t||'已同步'], err:['err', state.sync.t||'出錯'] };
+  const [cls, txt] = map[state.sync.s] || map.idle;
+  return el('div',{class:'sync',id:'syncbox'},[ el('span',{class:'dot '+cls}), el('span',{text:txt}) ]);
+}
+
+function mainView(){
+  const sites = state.data.sites || [];
+  const systems = [...new Set(sites.map(s=>s.system).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  const shown = filtered(sites);
+
+  const search = el('input',{type:'search',id:'q',placeholder:'搜尋站名、網址、帳號、備註…',value:state.q,
+    oninput:(e)=>{ state.q = e.target.value; refreshList(); }});
+
+  const chips = el('div',{class:'chips'},[
+    chipBtn('ALL','全部',sites.length),
+    ...systems.map(s=>chipBtn(s,s,sites.filter(x=>x.system===s).length, sysColors(s).bar)),
+  ]);
+
+  return el('div',{},[
+    el('header',{class:'topbar'},[
+      el('div',{class:'wrap'},[
+        el('div',{class:'topbar-in'},[
+          el('div',{class:'brand'},[
+            el('span',{class:'mark',text:'TS'}),
+            el('h1',{text:'測試站台冊'}),
+          ]),
+          syncBox(),
+          el('button',{class:'btn icon ghost',title:'設定',html:ICON.gear,onclick:()=>openSettings(false)}),
+        ])
+      ])
+    ]),
+    el('div',{class:'wrap'},[
+      el('div',{class:'toolbar'},[
+        el('div',{class:'search'},[ el('span',{html:ICON.search}), search ]),
+        chips,
+        el('button',{class:'btn primary',onclick:()=>openEditor(null)},[ el('span',{html:ICON.plus}), el('span',{text:'新增站台'}) ]),
+      ]),
+      el('div',{id:'list'}, shown.length ? listGrid(shown) : emptyState(sites.length)),
+    ])
+  ]);
+}
+
+function chipBtn(val,label,n,color){
+  return el('button',{class:'chip','aria-pressed': state.sysFilter===val, onclick:()=>{ state.sysFilter=val; render(); }},[
+    color ? el('span',{class:'sysdot',style:`background:${color}`}) : null,
+    el('span',{text:label}),
+    el('span',{class:'n',text:String(n)}),
+  ]);
+}
+
+function filtered(sites){
+  const q = state.q.trim().toLowerCase();
+  return sites.filter(s=>{
+    if (state.sysFilter !== 'ALL' && s.system !== state.sysFilter) return false;
+    if (!q) return true;
+    return ['system','name','currency','frontendUrl','boUrl','feAccount','boAccount','note','status']
+      .some(k => String(s[k]||'').toLowerCase().includes(q));
+  }).sort((a,b)=> (a.system||'').localeCompare(b.system||'') || (a.name||'').localeCompare(b.name||''));
+}
+
+function refreshList(){
+  const host = $('#list'); if (!host) return;
+  const shown = filtered(state.data.sites||[]);
+  host.replaceChildren(shown.length ? listGrid(shown) : emptyState((state.data.sites||[]).length));
+}
+
+function listGrid(sites){
+  return el('div',{class:'grid'}, sites.map(card));
+}
+
+function emptyState(total){
+  if (total === 0){
+    return el('div',{class:'empty'},[
+      el('h3',{text:'還沒有任何站台'}),
+      el('p',{text:'新增第一筆，或從設定把 Notion 匯出的 CSV 匯進來。'}),
+      el('div',{class:'rowbtns',style:'justify-content:center'},[
+        el('button',{class:'btn primary',text:'新增站台',onclick:()=>openEditor(null)}),
+        el('button',{class:'btn',text:'匯入 CSV',onclick:()=>openSettings(false,'csv')}),
+      ])
+    ]);
+  }
+  return el('div',{class:'empty'},[
+    el('h3',{text:'沒有符合的站台'}),
+    el('p',{text:'換個關鍵字，或把系統篩選切回「全部」。'}),
+    el('button',{class:'btn',text:'清除篩選',onclick:()=>{ state.q=''; state.sysFilter='ALL'; render(); }})
+  ]);
+}
+
+function copyable(value, label){
+  if (!value) return el('span',{class:'val empty',text:'—'});
+  return el('button',{class:'copyv',type:'button',title:`複製${label}`,text:value,onclick:()=>copy(value,label)});
+}
+function secretCell(site, key, label){
+  const shownKey = site.id + ':' + key;
+  const on = state.revealed.has(shownKey);
+  const v = site[key] || '';
+  const row = el('div',{class:'row'});
+  if (!v){ row.append(el('span',{class:'val empty',text:'—'})); return row; }
+  row.append(on ? copyable(v,label) : el('button',{class:'copyv',type:'button',title:`複製${label}`,text:'••••••••',onclick:()=>copy(v,label)}));
+  row.append(el('button',{class:'eye',type:'button','aria-label':on?'隱藏':'顯示',html:on?ICON.eyeoff:ICON.eye,onclick:()=>{
+    on ? state.revealed.delete(shownKey) : state.revealed.add(shownKey); refreshList();
+  }}));
+  return row;
+}
+
+function card(s){
+  const c = sysColors(s.system);
+  const dim = s.status === '停用';
+  const urlRow = (label, url) => el('div',{class:'field'},[
+    el('span',{class:'k',text:label}),
+    url ? el('a',{class:'val',href:url,target:'_blank',rel:'noopener noreferrer',text:url.replace(/^https?:\/\//,'')})
+        : el('span',{class:'val empty',text:'—'}),
+    url ? el('button',{class:'icobtn',type:'button',title:'複製網址',html:ICON.copy,onclick:()=>copy(url,label)}) : el('span'),
+  ]);
+
+  return el('article',{class:'card'+(dim?' dim':'')},[
+    el('div',{class:'card-head'},[
+      el('span',{class:'sysbar',style:`background:${c.bar}`}),
+      el('div',{class:'card-title'},[
+        el('div',{class:'nm',text:s.name || '(未命名)'}),
+        el('div',{class:'meta'},[
+          s.system ? el('span',{class:'tag sys',style:`background:${c.bg};color:${c.fg}`,text:s.system}) : null,
+          s.currency ? el('span',{class:'tag cur',text:s.currency}) : null,
+          el('span',{class:'state'},[
+            el('span',{class:'dot '+(s.status==='停用'?'idle':s.status==='觀察中'?'busy':''),style:'width:6px;height:6px'}),
+            el('span',{text:s.status||'使用中'})
+          ]),
+          s.example ? el('span',{class:'tag',style:'background:var(--warn);color:#fff',text:'範例'}) : null,
+        ])
+      ]),
+      el('div',{class:'card-acts'},[
+        el('button',{class:'icobtn',type:'button',title:'編輯',html:ICON.edit,onclick:()=>openEditor(s)}),
+      ])
+    ]),
+    el('div',{class:'card-body'},[
+      urlRow('前端', s.frontendUrl),
+      urlRow('BO', s.boUrl),
+      el('div',{class:'pairs'},[
+        el('div',{class:'pair'},[ el('span',{class:'k',text:'前台帳號'}), el('div',{class:'row'},[copyable(s.feAccount,'帳號')]) ]),
+        el('div',{class:'pair'},[ el('span',{class:'k',text:'前台密碼'}), secretCell(s,'fePassword','密碼') ]),
+        el('div',{class:'pair'},[ el('span',{class:'k',text:'BO 帳號'}),  el('div',{class:'row'},[copyable(s.boAccount,'BO 帳號')]) ]),
+        el('div',{class:'pair'},[ el('span',{class:'k',text:'BO 密碼'}),  secretCell(s,'boPassword','BO 密碼') ]),
+      ]),
+      s.note ? el('div',{class:'note',text:s.note}) : null,
+    ])
+  ]);
+}
+
+async function copy(text, label){
+  try{
+    await navigator.clipboard.writeText(text);
+    toast(`已複製${label||''}`);
+  }catch{
+    const ta = el('textarea',{}); ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.append(ta); ta.select();
+    try{ document.execCommand('copy'); toast(`已複製${label||''}`); }catch{ toast('複製失敗，請長按選取',true); }
+    ta.remove();
+  }
+}
+
+/* ---------- Modal 基礎 ---------- */
+let escHandler = null;
+function modal(title, bodyNode, footNodes, wide=false){
+  closeModal();
+  const scrim = el('div',{class:'scrim',id:'scrim',onclick:(e)=>{ if (e.target === scrim) closeModal(); }});
+  const box = el('div',{class:'modal'+(wide?' wide':''),role:'dialog','aria-modal':'true','aria-label':title},[
+    el('div',{class:'modal-head'},[
+      el('h2',{text:title}),
+      el('button',{class:'btn icon ghost',type:'button','aria-label':'關閉',html:ICON.x,onclick:closeModal}),
+    ]),
+    el('div',{class:'modal-body'},[bodyNode]),
+    footNodes ? el('div',{class:'modal-foot'}, footNodes) : null,
+  ]);
+  scrim.append(box);
+  document.body.append(scrim);
+  document.body.style.overflow='hidden';
+  escHandler = (e)=>{ if (e.key==='Escape') closeModal(); };
+  document.addEventListener('keydown', escHandler);
+  const focusable = box.querySelector('input,select,textarea,button');
+  if (focusable) setTimeout(()=>focusable.focus(), 30);
+  return box;
+}
+function closeModal(){
+  const s = $('#scrim'); if (s) s.remove();
+  document.body.style.overflow='';
+  if (escHandler){ document.removeEventListener('keydown', escHandler); escHandler=null; }
+}
+
+/* ---------- 新增 / 編輯 ---------- */
+function openEditor(site){
+  const isNew = !site;
+  const draft = isNew
+    ? { id:uid(), system:'', name:'', currency:'', status:'使用中', frontendUrl:'', boUrl:'',
+        feAccount:'', fePassword:'', boAccount:'', boPassword:'', note:'' }
+    : { ...site };
+
+  const inputs = {};
+  const mk = (f)=>{
+    let node;
+    if (f.opts){
+      node = el('select',{class:'inp',id:'f_'+f.k}, f.opts.map(o=>el('option',{value:o, selected:(draft[f.k]||f.opts[0])===o, text:o})));
+    } else if (f.area){
+      node = el('textarea',{class:'inp',id:'f_'+f.k,placeholder:f.ph||''}); node.value = draft[f.k]||'';
+    } else {
+      node = el('input',{class:'inp',id:'f_'+f.k,type:'text',placeholder:f.ph||'',autocomplete:'off',spellcheck:'false',value:draft[f.k]||''});
+      if (f.k==='frontendUrl'||f.k==='boUrl'||f.secret||f.k==='feAccount'||f.k==='boAccount') node.classList.add('mono');
+    }
+    inputs[f.k] = node;
+    return el('div',{class: f.full?'full':''},[ el('label',{class:'lbl',for:'f_'+f.k,text:f.label + (f.req?' *':'')}), node ]);
+  };
+
+  const body = el('div',{},[
+    el('fieldset',{class:'group'},[
+      el('legend',{text:'站台'}),
+      el('div',{class:'form-grid'}, FIELDS.filter(f=>['system','name','currency','status','frontendUrl','boUrl'].includes(f.k)).map(mk)),
+    ]),
+    el('fieldset',{class:'group'},[
+      el('legend',{text:'測試帳號'}),
+      el('div',{class:'form-grid'}, FIELDS.filter(f=>['feAccount','fePassword','boAccount','boPassword'].includes(f.k)).map(mk)),
+      el('p',{class:'hint',text:'staging 那種會扣真錢的帳號，密碼建議留空。'}),
+    ]),
+    el('div',{class:'form-grid'}, FIELDS.filter(f=>f.k==='note').map(mk)),
+  ]);
+
+  const errBox = el('div',{class:'err',hidden:true});
+  const saveBtn = el('button',{class:'btn primary',text: isNew?'新增並儲存':'儲存'});
+
+  const doSave = async ()=>{
+    for (const f of FIELDS) draft[f.k] = (inputs[f.k].value||'').trim();
+    if (!draft.system || !draft.name){ errBox.textContent='系統和站名是必填的'; errBox.hidden=false; return; }
+    for (const k of ['frontendUrl','boUrl']){
+      if (draft[k] && !/^https?:\/\//i.test(draft[k])) draft[k] = 'https://' + draft[k];
+    }
+    draft.updatedAt = nowISO();
+    delete draft.example;
+    saveBtn.disabled = true; saveBtn.textContent = '儲存中…';
+    const list = state.data.sites;
+    const idx = list.findIndex(x=>x.id===draft.id);
+    const backup = idx >= 0 ? list[idx] : null;
+    if (idx >= 0) list[idx] = draft; else list.push(draft);
+    try{
+      await save(isNew ? `新增 ${draft.name}` : `更新 ${draft.name}`);
+      closeModal(); render();
+    }catch(e){
+      if (idx >= 0) list[idx] = backup; else list.pop();
+      errBox.textContent = e.message; errBox.hidden = false;
+      saveBtn.disabled = false; saveBtn.textContent = isNew?'新增並儲存':'儲存';
+    }
+  };
+  saveBtn.addEventListener('click', doSave);
+
+  const foot = [ errBox ];
+  if (!isNew){
+    foot.push(el('button',{class:'btn danger',text:'刪除',onclick:async ()=>{
+      if (!confirm(`確定刪掉「${draft.name}」？`)) return;
+      const list = state.data.sites;
+      const idx = list.findIndex(x=>x.id===draft.id);
+      const backup = list[idx];
+      list.splice(idx,1);
+      try{ await save(`刪除 ${draft.name}`); closeModal(); render(); }
+      catch(e){ list.splice(idx,0,backup); }
+    }}));
+  }
+  foot.push(el('div',{style:'flex:1'}));
+  foot.push(el('button',{class:'btn',text:'取消',onclick:closeModal}));
+  foot.push(saveBtn);
+
+  const box = modal(isNew?'新增站台':'編輯站台', body, foot);
+  box.addEventListener('keydown',(e)=>{ if ((e.metaKey||e.ctrlKey) && e.key==='Enter') doSave(); });
+}
+
+/* ---------- 設定 ---------- */
+function openSettings(preAuth=false, jump=''){
+  const tokenInput = el('input',{class:'inp mono',type:'password',id:'tok',placeholder: state.token ? '••••••••••••（已設定）' : 'ghp_… 或 github_pat_…',autocomplete:'off'});
+  const ownerInput = el('input',{class:'inp mono',type:'text',id:'own',value:state.cfg.owner});
+  const repoInput  = el('input',{class:'inp mono',type:'text',id:'rep',value:state.cfg.repo});
+  const branchInput= el('input',{class:'inp mono',type:'text',id:'brn',value:state.cfg.branch});
+
+  const sections = [];
+
+  sections.push(el('div',{class:'sect'},[
+    el('h3',{text:'GitHub'}),
+    el('div',{class:'form-grid'},[
+      el('div',{},[ el('label',{class:'lbl',for:'own',text:'帳號 / 組織'}), ownerInput ]),
+      el('div',{},[ el('label',{class:'lbl',for:'rep',text:'Repo'}), repoInput ]),
+      el('div',{},[ el('label',{class:'lbl',for:'brn',text:'分支'}), branchInput ]),
+      el('div',{},[ el('label',{class:'lbl',for:'tok',text:'Personal access token'}), tokenInput ]),
+    ]),
+    el('p',{class:'hint',html:'只有要「寫入」才需要 token — 唯讀的人不用填。權限勾 <b>repo</b> 就夠。token 會用你的通關密碼加密後存在這台裝置，不會進 repo。'}),
+    el('div',{class:'rowbtns',style:'margin-top:10px'},[
+      el('button',{class:'btn',text:'儲存設定',onclick:async ()=>{
+        state.cfg.owner = ownerInput.value.trim() || DEFAULT_CFG.owner;
+        state.cfg.repo  = repoInput.value.trim()  || DEFAULT_CFG.repo;
+        state.cfg.branch= branchInput.value.trim()|| 'main';
+        saveCfg();
+        const t = tokenInput.value.trim();
+        if (t){
+          state.token = t;
+          if (state.password) store(SEC_KEY, await sealToken(state.password, t));
+          tokenInput.value = '';
+        }
+        toast('設定已存');
+        if (state.locked){ closeModal(); bootstrap(); } else { closeModal(); render(); }
+      }}),
+      state.token ? el('button',{class:'btn ghost',text:'清除 token',onclick:()=>{ state.token=''; store(SEC_KEY,null); toast('token 已清除'); closeModal(); }}) : null,
+    ])
+  ]));
+
+  if (!preAuth){
+    sections.push(el('div',{class:'sect',id:'sect-csv'},[
+      el('h3',{text:'CSV 匯入 / 備份'}),
+      el('p',{class:'hint',style:'margin-top:0',text:'Notion 的資料庫可以「Export → CSV」，選檔後下一步會讓你把欄位對起來。'}),
+      el('div',{class:'rowbtns'},[
+        el('button',{class:'btn',text:'匯入 CSV',onclick:pickCSV}),
+        el('button',{class:'btn',text:'下載備份 CSV',onclick:exportCSV}),
+        el('button',{class:'btn',text:'下載備份 JSON',onclick:exportJSON}),
+      ]),
+      el('p',{class:'hint',text:'備份檔是沒有加密的明文，下載後自己收好。'}),
+    ]));
+
+    const hasExamples = (state.data.sites||[]).some(s=>s.example);
+    sections.push(el('div',{class:'sect'},[
+      el('h3',{text:'資料'}),
+      el('div',{class:'rowbtns'},[
+        el('button',{class:'btn',text:'重新載入最新版',onclick:async ()=>{
+          try{
+            setSync('busy','讀取中…');
+            const r = await fetchRemote();
+            if (r.missing) throw new Error('遠端還沒有資料檔');
+            state.data = await decryptJSON(state.password, r.text);
+            state.sha = r.sha;
+            setSync('ok','已載入 ' + hhmm(state.data.updatedAt));
+            closeModal(); render(); toast('已載入最新版');
+          }catch(e){ setSync('err','讀取失敗'); toast(e.message,true); }
+        }}),
+        hasExamples ? el('button',{class:'btn danger',text:'清除範例資料',onclick:async ()=>{
+          const before = state.data.sites;
+          state.data.sites = before.filter(s=>!s.example);
+          try{ await save('清除範例資料'); closeModal(); render(); }
+          catch{ state.data.sites = before; }
+        }}) : null,
+      ])
+    ]));
+
+    sections.push(el('div',{class:'sect'},[
+      el('h3',{text:'通關密碼'}),
+      el('p',{class:'hint',style:'margin-top:0',text:'改密碼會把整份資料重新加密上傳，同事手上的舊密碼就會失效。'}),
+      el('div',{class:'rowbtns'},[
+        el('button',{class:'btn',text:'更改密碼',onclick:changePassword}),
+        read(PWD_KEY) ? el('button',{class:'btn ghost',text:'這台裝置不要記住密碼',onclick:()=>{ store(PWD_KEY,null); toast('已取消記住'); closeModal(); }}) : null,
+      ])
+    ]));
+  }
+
+  modal('設定', el('div',{}, sections), [ el('button',{class:'btn',text:'關閉',onclick:closeModal}) ]);
+  if (jump === 'csv') setTimeout(()=>$('#sect-csv')?.scrollIntoView({block:'center'}), 50);
+}
+
+function changePassword(){
+  const p1 = el('input',{class:'inp',type:'password',placeholder:'新密碼（至少 8 字）',autocomplete:'new-password'});
+  const p2 = el('input',{class:'inp',type:'password',placeholder:'再輸入一次',autocomplete:'new-password'});
+  const errBox = el('div',{class:'err',hidden:true});
+  const btn = el('button',{class:'btn primary',text:'換掉密碼'});
+  btn.addEventListener('click', async ()=>{
+    if (p1.value.length < 8){ errBox.textContent='至少 8 個字'; errBox.hidden=false; return; }
+    if (p1.value !== p2.value){ errBox.textContent='兩次輸入不一樣'; errBox.hidden=false; return; }
+    const old = state.password;
+    state.password = p1.value;
+    btn.disabled = true; btn.textContent='處理中…';
+    try{
+      await save('更換加密密碼');
+      if (state.token) store(SEC_KEY, await sealToken(state.password, state.token));
+      if (read(PWD_KEY)) store(PWD_KEY, state.password);
+      closeModal(); toast('密碼已更換，記得通知同事');
+    }catch(e){
+      state.password = old; errBox.textContent=e.message; errBox.hidden=false;
+      btn.disabled=false; btn.textContent='換掉密碼';
+    }
+  });
+  modal('更改通關密碼', el('div',{class:'stack'},[p1,p2,errBox]), [
+    el('button',{class:'btn',text:'取消',onclick:closeModal}), btn
+  ]);
+}
+
+/* ---------- CSV ---------- */
+function parseCSV(text){
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const rows = []; let row = []; let cur = ''; let q = false;
+  for (let i=0;i<text.length;i++){
+    const ch = text[i];
+    if (q){
+      if (ch === '"'){ if (text[i+1] === '"'){ cur+='"'; i++; } else q = false; }
+      else cur += ch;
+    } else {
+      if (ch === '"') q = true;
+      else if (ch === ','){ row.push(cur); cur=''; }
+      else if (ch === '\n'){ row.push(cur); rows.push(row); row=[]; cur=''; }
+      else if (ch === '\r'){ /* skip */ }
+      else cur += ch;
+    }
+  }
+  if (cur.length || row.length){ row.push(cur); rows.push(row); }
+  return rows.filter(r => r.some(c => String(c).trim() !== ''));
+}
+
+const GUESS = {
+  system:      ['system','系統','平台','站別','type','類型'],
+  name:        ['name','站名','品牌','網站','site','title','名稱','brand'],
+  currency:    ['currency','貨幣','幣別','幣種'],
+  status:      ['status','狀態'],
+  frontendUrl: ['frontend','前端','前台','url','網址','link','站台網址','fe'],
+  boUrl:       ['bo','backoffice','back office','後台','admin','管理'],
+  feAccount:   ['account','帳號','user','username','會員帳號','測試帳號','前台帳號'],
+  fePassword:  ['password','密碼','pwd','pass'],
+  boAccount:   ['bo account','bo帳號','後台帳號','admin account','bo user'],
+  boPassword:  ['bo password','bo密碼','後台密碼','admin password'],
+  note:        ['note','備註','remark','說明','comment','memo'],
+};
+function guessColumn(header, key){
+  const h = String(header).toLowerCase().trim();
+  const cands = GUESS[key] || [];
+  for (const c of cands) if (h === c) return 3;
+  for (const c of cands) if (h.includes(c)) return 2;
+  return 0;
+}
+
+function pickCSV(){
+  const input = el('input',{type:'file',accept:'.csv,text/csv'});
+  input.addEventListener('change', ()=>{
+    const f = input.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = ()=> showMapping(parseCSV(String(r.result)));
+    r.readAsText(f, 'utf-8');
+  });
+  input.click();
+}
+
+function showMapping(rows){
+  if (rows.length < 2){ toast('CSV 看起來是空的',true); return; }
+  const headers = rows[0].map(h=>String(h).trim());
+  const body = rows.slice(1);
+  const selects = {};
+
+  // 為每個目標欄位自動挑最相近的來源欄
+  const used = new Set();
+  const autoPick = {};
+  for (const f of FIELDS){
+    let best = -1, bestScore = 0;
+    headers.forEach((h,i)=>{ if (used.has(i)) return; const sc = guessColumn(h, f.k); if (sc > bestScore){ bestScore = sc; best = i; } });
+    if (best >= 0 && bestScore > 0){ autoPick[f.k] = best; used.add(best); }
+  }
+
+  const mapRows = FIELDS.map(f=>{
+    const sel = el('select',{class:'inp'},[
+      el('option',{value:'-1',text:'— 不匯入 —'}),
+      ...headers.map((h,i)=>el('option',{value:String(i), selected: autoPick[f.k]===i, text:h||`(第 ${i+1} 欄)`})),
+    ]);
+    selects[f.k] = sel;
+    return el('tr',{},[
+      el('td',{},[el('strong',{text:f.label})]),
+      el('td',{style:'width:55%'},[sel]),
+    ]);
+  });
+
+  const modeReplace = el('input',{type:'radio',name:'impmode',value:'replace',id:'m_rep'});
+  const modeAppend  = el('input',{type:'radio',name:'impmode',value:'append',id:'m_app',checked:true});
+
+  const preview = el('p',{class:'hint',text:`讀到 ${body.length} 列、${headers.length} 欄。`});
+
+  const doImport = async ()=>{
+    const picked = {};
+    for (const f of FIELDS){ const v = parseInt(selects[f.k].value,10); if (v >= 0) picked[f.k] = v; }
+    if (picked.name == null && picked.frontendUrl == null){ toast('至少要對應「站名」或「前端網址」',true); return; }
+    const imported = body.map(r=>{
+      const o = { id:uid(), updatedAt:nowISO() };
+      for (const f of FIELDS) o[f.k] = picked[f.k] != null ? String(r[picked[f.k]] ?? '').trim() : '';
+      if (!o.name) o.name = o.frontendUrl ? o.frontendUrl.replace(/^https?:\/\//,'').split('/')[0] : '(未命名)';
+      if (!o.status) o.status = '使用中';
+      for (const k of ['frontendUrl','boUrl']) if (o[k] && !/^https?:\/\//i.test(o[k])) o[k] = 'https://' + o[k];
+      return o;
+    }).filter(o => o.name !== '(未命名)' || o.frontendUrl || o.system);
+
+    const before = state.data.sites;
+    state.data.sites = modeReplace.checked ? imported : [...before.filter(s=>!s.example), ...imported];
+    try{
+      await save(`匯入 ${imported.length} 筆站台`);
+      closeModal(); render(); toast(`匯入了 ${imported.length} 筆`);
+    }catch(e){ state.data.sites = before; }
+  };
+
+  modal('對應 CSV 欄位', el('div',{},[
+    preview,
+    el('div',{class:'tbl-wrap'},[ el('table',{},[
+      el('thead',{},[ el('tr',{},[ el('th',{text:'這個網站的欄位'}), el('th',{text:'對應到 CSV 的哪一欄'}) ]) ]),
+      el('tbody',{}, mapRows),
+    ])]),
+    el('div',{class:'sect'},[
+      el('h3',{text:'匯入方式'}),
+      el('label',{class:'cbrow',for:'m_app'},[ modeAppend, el('span',{text:'加在現有清單後面（保留原本的）'}) ]),
+      el('label',{class:'cbrow',for:'m_rep',style:'margin-top:6px'},[ modeReplace, el('span',{text:'整份取代（現有資料全部清掉）'}) ]),
+    ]),
+  ]), [
+    el('button',{class:'btn',text:'取消',onclick:closeModal}),
+    el('button',{class:'btn primary',text:'開始匯入',onclick:doImport}),
+  ], true);
+}
+
+function download(filename, text, mime='text/plain'){
+  const blob = new Blob([text], {type: mime+';charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = el('a',{href:url,download:filename});
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+function csvCell(v){ const s = String(v ?? ''); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; }
+function exportCSV(){
+  const head = FIELDS.map(f=>f.label).join(',');
+  const lines = (state.data.sites||[]).map(s=>FIELDS.map(f=>csvCell(s[f.k])).join(','));
+  download(`測試站台-${new Date().toISOString().slice(0,10)}.csv`, '﻿'+[head,...lines].join('\n'), 'text/csv');
+  toast('已下載 CSV');
+}
+function exportJSON(){
+  download(`測試站台-${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(state.data,null,2), 'application/json');
+  toast('已下載 JSON');
+}
+
+/* =========================================================================
+   啟動
+   ========================================================================= */
+async function bootstrap(){
+  render();
+  try{
+    const remote = await fetchRemote();
+    if (remote.missing){
+      state.initializing = true;
+      render();
+      return;
+    }
+    state.sha = remote.sha;
+    const saved = read(PWD_KEY);
+    if (saved){
+      try{
+        state.data = await decryptJSON(saved, remote.text);
+        state.password = saved;
+        const sealed = read(SEC_KEY);
+        if (sealed) state.token = await openToken(saved, sealed);
+        state.locked = false;
+        setSync('ok','已載入 ' + hhmm(state.data.updatedAt));
+      }catch{ store(PWD_KEY, null); }
+    }
+    state._remoteText = remote.text;
+    render();
+  }catch(e){
+    render();
+    toast(e.message, true);
+  }
+}
+
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>{ if (!state.locked) render(); });
+bootstrap();
+</script>
+</body>
+</html>
