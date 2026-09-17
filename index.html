@@ -126,17 +126,17 @@ a{color:var(--accent)}
 .tag.cur{background:transparent;border:1px solid var(--line-2);color:var(--muted)}
 .state{font-size:11.5px;color:var(--muted);display:inline-flex;align-items:center;gap:5px}
 .card-acts{display:flex;gap:2px;flex:0 0 auto}
-.card-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:9px}
+.card-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:9px;flex:1 1 auto}
 .field{display:grid;grid-template-columns:52px 1fr auto;gap:8px;align-items:center;min-height:26px}
 .field > .k{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
 .val{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink-2);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 a.val{text-decoration:none;color:var(--accent)}
 a.val:hover{text-decoration:underline}
 .val.empty{color:var(--muted);opacity:.6;font-style:normal}
-.pairs{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-top:9px;border-top:1px dashed var(--line)}
+.pairs{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;align-content:start;padding-top:9px;border-top:1px dashed var(--line)}
 .pair{min-width:0}
 .pair .k{font-size:10.5px;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase;display:block;margin-bottom:2px}
-.pair .row{display:flex;align-items:center;gap:4px;min-width:0}
+.pair .row{display:flex;align-items:center;gap:4px;min-width:0;min-height:21px}
 .copyv{
   font-family:"IBM Plex Mono",monospace;font-size:12.5px;background:none;border:0;padding:2px 0;
   cursor:pointer;text-align:left;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
@@ -629,6 +629,7 @@ function secretCell(site, key, label){
 function card(s){
   const c = sysColors(s.system);
   const dim = s.status === '停用';
+  const hasCreds = !!(s.feAccount || s.fePassword || s.boAccount || s.boPassword);
   const urlRow = (label, url) => el('div',{class:'field'},[
     el('span',{class:'k',text:label}),
     url ? el('a',{class:'val',href:url,target:'_blank',rel:'noopener noreferrer',text:url.replace(/^https?:\/\//,'')})
@@ -658,12 +659,12 @@ function card(s){
     el('div',{class:'card-body'},[
       urlRow('前端', s.frontendUrl),
       urlRow('BO', s.boUrl),
-      el('div',{class:'pairs'},[
-        el('div',{class:'pair'},[ el('span',{class:'k',text:'前台帳號'}), el('div',{class:'row'},[copyable(s.feAccount,'帳號')]) ]),
-        el('div',{class:'pair'},[ el('span',{class:'k',text:'前台密碼'}), secretCell(s,'fePassword','密碼') ]),
-        el('div',{class:'pair'},[ el('span',{class:'k',text:'BO 帳號'}),  el('div',{class:'row'},[copyable(s.boAccount,'BO 帳號')]) ]),
-        el('div',{class:'pair'},[ el('span',{class:'k',text:'BO 密碼'}),  secretCell(s,'boPassword','BO 密碼') ]),
-      ]),
+      hasCreds ? el('div',{class:'pairs'},[
+        (s.feAccount||s.fePassword) ? el('div',{class:'pair'},[ el('span',{class:'k',text:'前台帳號'}), el('div',{class:'row'},[copyable(s.feAccount,'帳號')]) ]) : null,
+        (s.feAccount||s.fePassword) ? el('div',{class:'pair'},[ el('span',{class:'k',text:'前台密碼'}), secretCell(s,'fePassword','密碼') ]) : null,
+        (s.boAccount||s.boPassword) ? el('div',{class:'pair'},[ el('span',{class:'k',text:'BO 帳號'}),  el('div',{class:'row'},[copyable(s.boAccount,'BO 帳號')]) ]) : null,
+        (s.boAccount||s.boPassword) ? el('div',{class:'pair'},[ el('span',{class:'k',text:'BO 密碼'}),  secretCell(s,'boPassword','BO 密碼') ]) : null,
+      ]) : null,
       s.note ? el('div',{class:'note',text:s.note}) : null,
     ])
   ]);
