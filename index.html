@@ -166,6 +166,7 @@ label.lbl{display:block;font-size:12px;font-weight:600;color:var(--ink-2);margin
 textarea.inp{min-height:64px;resize:vertical;font-family:inherit}
 .hint{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.5}
 .err{font-size:13px;color:var(--crit);margin-top:4px}
+.loadfail{font-size:13px;color:var(--crit);background:color-mix(in srgb,var(--crit) 10%, transparent);border:1px solid color-mix(in srgb,var(--crit) 35%, transparent);border-radius:8px;padding:10px 12px;margin-bottom:14px;line-height:1.5}
 .keyline{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
 .cbrow{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2)}
 .cbrow input{width:16px;height:16px;accent-color:var(--accent)}
@@ -258,7 +259,7 @@ const state = {
   sysFilter: 'ALL',
   revealed: new Set(),
   sync: { s:'idle', t:'' },
-  dirty: false,
+  loadError: '',
 };
 
 /* ------------------------- 小工具 ------------------------- */
@@ -361,19 +362,40 @@ function apiURL(path){ const c = state.cfg; return `https://api.github.com/repos
 
 async function fetchRemote(){
   const url = apiURL(`/contents/${DATA_PATH}?ref=${encodeURIComponent(state.cfg.branch)}&_=${Date.now()}`);
-  const r = await fetch(url, { headers: ghHeaders(), cache:'no-store' });
-  if (r.status === 404) return { missing:true };
-  if (!r.ok) {
-    if (r.status === 403) throw new Error('GitHub 拒絕讀取（可能是未登入的呼叫次數用完了，等一小時或在設定填 token）');
-    if (r.status === 401) throw new Error('GitHub token 無效或過期');
-    throw new Error(`讀取失敗 HTTP ${r.status}`);
+  let r;
+  try{
+    r = await fetch(url, { headers: ghHeaders(), cache:'no-store' });
+  }catch{
+    return fetchRaw('連不上 GitHub API');
   }
-  const j = await r.json();
-  return { sha: j.sha, text: dec.decode(b64d(j.content)) };
+  if (r.status === 404) return { missing:true };
+  if (r.ok){
+    const j = await r.json();
+    return { sha: j.sha, text: dec.decode(b64d(j.content)) };
+  }
+  // API 用不了（多半是未登入的每小時 60 次用完）就改走 raw，讀得到就好
+  if (r.status === 403 || r.status === 429) return fetchRaw('GitHub API 呼叫次數用完');
+  if (r.status === 401) throw new Error('GitHub token 無效或過期');
+  throw new Error(`讀取失敗 HTTP ${r.status}`);
+}
+
+// 備援通道：raw 沒有次數限制，但沒有 sha，而且 CDN 可能慢個幾分鐘才更新
+async function fetchRaw(why){
+  const c = state.cfg;
+  const url = `https://raw.githubusercontent.com/${c.owner}/${c.repo}/${encodeURIComponent(c.branch)}/${DATA_PATH}?_=${Date.now()}`;
+  const r = await fetch(url, { cache:'no-store' });
+  if (r.status === 404) return { missing:true };
+  if (!r.ok) throw new Error(`${why}，備援通道也讀不到（HTTP ${r.status}）`);
+  return { sha: null, text: await r.text(), viaRaw: true };
 }
 
 async function pushRemote(payloadText, message){
   if (!state.token) throw new Error('沒有 GitHub token，無法儲存。到設定貼上 token。');
+  // 走備援通道載入的沒有 sha，補查一次，否則 GitHub 會當成「建立新檔」而擋下來
+  if (!state.sha){
+    const probe = await fetch(apiURL(`/contents/${DATA_PATH}?ref=${encodeURIComponent(state.cfg.branch)}&_=${Date.now()}`), { headers: ghHeaders(), cache:'no-store' });
+    if (probe.ok) state.sha = (await probe.json()).sha;
+  }
   const body = {
     message,
     content: b64e(enc.encode(payloadText)),
@@ -506,6 +528,10 @@ function lockView(){
         el('p',{class:'lead', text: first
           ? '這個 repo 裡還沒有資料檔。設一組通關密碼，之後所有內容都用它加密；密碼只存在你和同事的腦袋裡，沒有人能幫你重設。'
           : '資料是加密的。輸入通關密碼解開這份清單。'}),
+        state.loadError ? el('div',{class:'loadfail'},[
+          el('div',{text:'讀不到資料檔：' + state.loadError}),
+          el('button',{class:'btn sm',type:'button',text:'重試',style:'margin-top:8px',onclick:()=>{ state.loadError=''; bootstrap(); }}),
+        ]) : null,
         form,
         el('div',{class:'keyline'},[
           el('span',{html:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>'}),
@@ -1052,6 +1078,7 @@ function exportJSON(){
    啟動
    ========================================================================= */
 async function bootstrap(){
+  state.loadError = '';
   render();
   try{
     const remote = await fetchRemote();
@@ -1072,11 +1099,10 @@ async function bootstrap(){
         setSync('ok','已載入 ' + hhmm(state.data.updatedAt));
       }catch{ store(PWD_KEY, null); }
     }
-    state._remoteText = remote.text;
     render();
   }catch(e){
+    state.loadError = e.message;
     render();
-    toast(e.message, true);
   }
 }
 
