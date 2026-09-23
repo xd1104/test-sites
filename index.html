@@ -149,6 +149,33 @@ a.val:hover{text-decoration:underline}
 .icobtn{background:none;border:0;cursor:pointer;color:var(--muted);padding:3px;line-height:0;border-radius:5px;flex:0 0 auto}
 .icobtn:hover{color:var(--accent);background:var(--sunken)}
 
+/* ---------- 更多測試帳號 ---------- */
+.accs{padding-top:9px;border-top:1px dashed var(--line);display:flex;flex-direction:column;gap:6px}
+.accs > .k, .prog .k{font-size:10.5px;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.accrow{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;align-items:center}
+.accrow .row{display:flex;align-items:center;gap:4px;min-width:0;min-height:21px}
+.accmemo{grid-column:1/-1;font-size:12px;color:var(--muted)}
+
+/* ---------- 測試進度 ---------- */
+.prog{padding:9px 10px;border-radius:8px;background:var(--surface-2);border:1px solid var(--line);display:flex;flex-direction:column;gap:7px}
+.prog-head{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.stage{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.stage.busy{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+.stage.warn{background:color-mix(in srgb,var(--crit) 13%,transparent);color:var(--crit)}
+.stage.idle{background:var(--sunken);color:var(--muted)}
+.dot.warn{background:var(--crit)}
+.round{font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.when{font-size:12px;color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums}
+.when.stale{color:var(--warn);font-weight:600}
+.prog .sub{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.03em;margin-right:6px}
+.issues ul{margin:3px 0 0;padding-left:18px;display:grid;gap:2px;font-size:13px;color:var(--ink)}
+.next,.rep{font-size:13px;color:var(--ink-2);word-break:break-word}
+.rep a{font-family:"IBM Plex Mono",monospace;font-size:12px}
+.stagechips{padding-bottom:12px;margin-top:-4px}
+.chiplbl{font-size:12px;color:var(--muted);font-weight:600;margin-right:2px}
+.acct-edit{display:grid;grid-template-columns:1fr 1fr 1.3fr auto;gap:6px;align-items:center;margin-bottom:6px}
+@media (max-width:560px){.acct-edit{grid-template-columns:1fr 1fr auto}.acct-edit .memo{grid-column:1/3}}
+
 /* ---------- empty / lock ---------- */
 .center-stage{min-height:70vh;display:grid;place-items:center;padding-block:32px}
 .panel{
@@ -171,9 +198,9 @@ textarea.inp{min-height:64px;resize:vertical;font-family:inherit}
 .cbrow{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2)}
 .cbrow input{width:16px;height:16px;accent-color:var(--accent)}
 
-.empty{text-align:center;padding:48px 20px;color:var(--muted)}
-.empty h3{color:var(--ink);font-size:17px;margin:0 0 6px}
-.empty p{margin:0 auto 18px;max-width:34em;font-size:13.5px;line-height:1.6}
+div.empty{text-align:center;padding:48px 20px;color:var(--muted)}
+div.empty h3{color:var(--ink);font-size:17px;margin:0 0 6px}
+div.empty p{margin:0 auto 18px;max-width:34em;font-size:13.5px;line-height:1.6}
 
 /* ---------- modal ---------- */
 .scrim{position:fixed;inset:0;background:rgba(9,13,18,.55);z-index:50;display:grid;place-items:start center;overflow-y:auto;padding:24px 12px 60px}
@@ -244,7 +271,33 @@ const FIELDS = [
   { k:'boAccount',  label:'BO 帳號' },
   { k:'boPassword', label:'BO 密碼', secret:true },
   { k:'note',       label:'備註', full:true, area:true },
+  // 測試進度
+  { k:'testStage',  label:'測試進度',    opts:['還沒開始','測試中','等工程修','等供應商','已結案'] },
+  { k:'testRound',  label:'目前輪次',    ph:'例：第八輪' },
+  { k:'lastTested', label:'最後測試日',  type:'date' },
+  { k:'reportRef',  label:'最新報告',    ph:'檔名或連結', full:true },
+  { k:'openIssues', label:'還沒修好的問題', ph:'一行一條，例：R8-01 手機版日期欄跑到畫面外', full:true, area:true },
+  { k:'nextStep',   label:'下一步',      ph:'例：等工程回修復報告後驗 R8-01', full:true, area:true },
+  // 多組測試帳號：存成陣列，匯出 CSV 時攤平成一格
+  { k:'moreAccounts', label:'更多測試帳號', list:true, full:true },
 ];
+const PROGRESS_KEYS = ['testStage','testRound','lastTested','reportRef','openIssues','nextStep'];
+const STAGE_TONE = { '還沒開始':'idle', '測試中':'busy', '等工程修':'warn', '等供應商':'warn', '已結案':'' };
+
+// 更多測試帳號 ⇄ 文字（CSV 用）：「帳號 / 密碼 / 用途」一組一行
+function acctToText(list){ return (list||[]).filter(a=>a.acc||a.pwd||a.memo).map(a=>[a.acc||'',a.pwd||'',a.memo||''].join(' / ')).join('\n'); }
+function textToAcct(text){
+  return String(text||'').split(/\n|；|;/).map(l=>l.trim()).filter(Boolean).map(l=>{
+    const [acc='',pwd='',...rest] = l.split(/\s*\/\s*/);
+    return { acc:acc.trim(), pwd:pwd.trim(), memo:rest.join(' / ').trim() };
+  });
+}
+function daysAgo(d){
+  if (!d) return null;
+  const t = new Date(d + 'T00:00:00'); if (isNaN(t)) return null;
+  const n = Math.floor((Date.now() - t.getTime()) / 86400000);
+  return n;
+}
 
 const state = {
   locked: true,
@@ -257,6 +310,7 @@ const state = {
   token: '',
   q: '',
   sysFilter: 'ALL',
+  stageFilter: 'ALL',
   revealed: new Set(),
   sync: { s:'idle', t:'' },
   loadError: '',
@@ -564,6 +618,12 @@ function mainView(){
     chipBtn('ALL','全部',sites.length),
     ...systems.map(s=>chipBtn(s,s,sites.filter(x=>x.system===s).length, sysColors(s).bar)),
   ]);
+  const stages = FIELDS.find(f=>f.k==='testStage').opts.filter(o=>sites.some(s=>s.testStage===o));
+  const stageChips = stages.length ? el('div',{class:'chips stagechips'},[
+    el('span',{class:'chiplbl',text:'進度'}),
+    stageChip('ALL','不限'),
+    ...stages.map(o=>stageChip(o,o,sites.filter(s=>s.testStage===o).length)),
+  ]) : null;
 
   return el('div',{},[
     el('header',{class:'topbar'},[
@@ -584,6 +644,7 @@ function mainView(){
         chips,
         el('button',{class:'btn primary',onclick:()=>openEditor(null)},[ el('span',{html:ICON.plus}), el('span',{text:'新增站台'}) ]),
       ]),
+      stageChips,
       el('div',{id:'list'}, shown.length ? listGrid(shown) : emptyState(sites.length)),
     ])
   ]);
@@ -597,13 +658,24 @@ function chipBtn(val,label,n,color){
   ]);
 }
 
+function stageChip(val,label,n){
+  return el('button',{class:'chip','aria-pressed': state.stageFilter===val, onclick:()=>{ state.stageFilter=val; render(); }},[
+    val!=='ALL' ? el('span',{class:'dot '+(STAGE_TONE[val]||''),style:'width:7px;height:7px'}) : null,
+    el('span',{text:label}),
+    n!=null ? el('span',{class:'n',text:String(n)}) : null,
+  ]);
+}
+
 function filtered(sites){
   const q = state.q.trim().toLowerCase();
   return sites.filter(s=>{
     if (state.sysFilter !== 'ALL' && s.system !== state.sysFilter) return false;
+    if (state.stageFilter !== 'ALL' && s.testStage !== state.stageFilter) return false;
     if (!q) return true;
-    return ['system','name','currency','frontendUrl','boUrl','feAccount','boAccount','note','status']
-      .some(k => String(s[k]||'').toLowerCase().includes(q));
+    return ['system','name','currency','frontendUrl','boUrl','feAccount','boAccount','note','status',
+            'testStage','testRound','reportRef','openIssues','nextStep']
+      .some(k => String(s[k]||'').toLowerCase().includes(q))
+      || (s.moreAccounts||[]).some(a => (a.acc+' '+a.memo).toLowerCase().includes(q));
   }).sort((a,b)=> (a.system||'').localeCompare(b.system||'') || (a.name||'').localeCompare(b.name||''));
 }
 
@@ -631,7 +703,7 @@ function emptyState(total){
   return el('div',{class:'empty'},[
     el('h3',{text:'沒有符合的站台'}),
     el('p',{text:'換個關鍵字，或把系統篩選切回「全部」。'}),
-    el('button',{class:'btn',text:'清除篩選',onclick:()=>{ state.q=''; state.sysFilter='ALL'; render(); }})
+    el('button',{class:'btn',text:'清除篩選',onclick:()=>{ state.q=''; state.sysFilter='ALL'; state.stageFilter='ALL'; render(); }})
   ]);
 }
 
@@ -691,8 +763,57 @@ function card(s){
         (s.boAccount||s.boPassword) ? el('div',{class:'pair'},[ el('span',{class:'k',text:'BO 帳號'}),  el('div',{class:'row'},[copyable(s.boAccount,'BO 帳號')]) ]) : null,
         (s.boAccount||s.boPassword) ? el('div',{class:'pair'},[ el('span',{class:'k',text:'BO 密碼'}),  secretCell(s,'boPassword','BO 密碼') ]) : null,
       ]) : null,
+      moreAccountsBlock(s),
+      progressBlock(s),
       s.note ? el('div',{class:'note',text:s.note}) : null,
     ])
+  ]);
+}
+
+function moreAccountsBlock(s){
+  const list = (s.moreAccounts||[]).filter(a=>a.acc||a.pwd||a.memo);
+  if (!list.length) return null;
+  return el('div',{class:'accs'},[
+    el('span',{class:'k',text:`更多測試帳號 · ${list.length}`}),
+    ...list.map((a,i)=>{
+      const key = s.id + ':acc' + i;
+      const on = state.revealed.has(key);
+      return el('div',{class:'accrow'},[
+        el('div',{class:'row'},[ copyable(a.acc,'帳號') ]),
+        el('div',{class:'row'}, a.pwd ? [
+          on ? copyable(a.pwd,'密碼') : el('button',{class:'copyv',type:'button',title:'複製密碼',text:'••••••',onclick:()=>copy(a.pwd,'密碼')}),
+          el('button',{class:'eye',type:'button','aria-label':on?'隱藏':'顯示',html:on?ICON.eyeoff:ICON.eye,onclick:()=>{ on?state.revealed.delete(key):state.revealed.add(key); refreshList(); }}),
+        ] : [ el('span',{class:'val empty',text:'—'}) ]),
+        a.memo ? el('div',{class:'accmemo',text:a.memo}) : null,
+      ]);
+    })
+  ]);
+}
+
+function progressBlock(s){
+  if (!PROGRESS_KEYS.some(k=>s[k])) return null;
+  const n = daysAgo(s.lastTested);
+  const ago = n==null ? '' : n<=0 ? '今天' : n===1 ? '昨天' : `${n} 天前`;
+  const stale = n!=null && n>7 && s.testStage!=='已結案';
+  const issues = String(s.openIssues||'').split('\n').map(x=>x.trim()).filter(Boolean);
+  return el('div',{class:'prog'},[
+    el('div',{class:'prog-head'},[
+      el('span',{class:'k',text:'測試進度'}),
+      s.testStage ? el('span',{class:'stage '+(STAGE_TONE[s.testStage]||'done')},[ el('span',{class:'dot '+(STAGE_TONE[s.testStage]||''),style:'width:6px;height:6px'}), el('span',{text:s.testStage}) ]) : null,
+      s.testRound ? el('span',{class:'round',text:s.testRound}) : null,
+      s.lastTested ? el('span',{class:'when'+(stale?' stale':''),title:s.lastTested,text:`${s.lastTested.slice(5).replace('-','/')} · ${ago}`}) : null,
+    ]),
+    issues.length ? el('div',{class:'issues'},[
+      el('div',{class:'sub',text:`還沒修好 · ${issues.length}`}),
+      el('ul',{}, issues.map(t=>el('li',{text:t}))),
+    ]) : null,
+    s.nextStep ? el('div',{class:'next'},[ el('span',{class:'sub',text:'下一步'}), el('span',{text:s.nextStep}) ]) : null,
+    s.reportRef ? el('div',{class:'rep'},[
+      el('span',{class:'sub',text:'報告'}),
+      /^https?:\/\//i.test(s.reportRef)
+        ? el('a',{href:s.reportRef,target:'_blank',rel:'noopener noreferrer',text:s.reportRef.replace(/^https?:\/\//,'')})
+        : copyable(s.reportRef,'報告檔名'),
+    ]) : null,
   ]);
 }
 
@@ -741,13 +862,20 @@ function openEditor(site){
   const isNew = !site;
   const draft = isNew
     ? { id:uid(), system:'', name:'', currency:'', status:'使用中', frontendUrl:'', boUrl:'',
-        feAccount:'', fePassword:'', boAccount:'', boPassword:'', note:'' }
-    : { ...site };
+        feAccount:'', fePassword:'', boAccount:'', boPassword:'', note:'',
+        testStage:'', testRound:'', lastTested:'', reportRef:'', openIssues:'', nextStep:'', moreAccounts:[] }
+    : { ...site, moreAccounts: (site.moreAccounts||[]).map(a=>({...a})) };
 
   const inputs = {};
   const mk = (f)=>{
     let node;
-    if (f.opts){
+    if (f.k === 'testStage'){
+      node = el('select',{class:'inp',id:'f_'+f.k},[
+        el('option',{value:'',selected:!draft.testStage,text:'— 未設定 —'}),
+        ...f.opts.map(o=>el('option',{value:o, selected:draft.testStage===o, text:o}))]);
+    } else if (f.type === 'date'){
+      node = el('input',{class:'inp',id:'f_'+f.k,type:'date',value:draft[f.k]||''});
+    } else if (f.opts){
       node = el('select',{class:'inp',id:'f_'+f.k}, f.opts.map(o=>el('option',{value:o, selected:(draft[f.k]||f.opts[0])===o, text:o})));
     } else if (f.area){
       node = el('textarea',{class:'inp',id:'f_'+f.k,placeholder:f.ph||''}); node.value = draft[f.k]||'';
@@ -759,6 +887,19 @@ function openEditor(site){
     return el('div',{class: f.full?'full':''},[ el('label',{class:'lbl',for:'f_'+f.k,text:f.label + (f.req?' *':'')}), node ]);
   };
 
+  // 更多測試帳號：可增減的列
+  const acctList = el('div',{});
+  const drawAccts = ()=>{
+    acctList.replaceChildren(...draft.moreAccounts.map((a,i)=>{
+      const inp = (key,ph,cls)=>{ const n = el('input',{class:'inp mono '+(cls||''),type:'text',placeholder:ph,autocomplete:'off',spellcheck:'false',value:a[key]||''}); n.addEventListener('input',()=>{ a[key]=n.value; }); return n; };
+      return el('div',{class:'acct-edit'},[
+        inp('acc','帳號'), inp('pwd','密碼'), inp('memo','用途／備註','memo'),
+        el('button',{class:'icobtn',type:'button',title:'刪掉這組',html:ICON.x,onclick:()=>{ draft.moreAccounts.splice(i,1); drawAccts(); }}),
+      ]);
+    }));
+  };
+  drawAccts();
+
   const body = el('div',{},[
     el('fieldset',{class:'group'},[
       el('legend',{text:'站台'}),
@@ -769,6 +910,21 @@ function openEditor(site){
       el('div',{class:'form-grid'}, FIELDS.filter(f=>['feAccount','fePassword','boAccount','boPassword'].includes(f.k)).map(mk)),
       el('p',{class:'hint',text:'staging 那種會扣真錢的帳號，密碼建議留空。'}),
     ]),
+    el('fieldset',{class:'group'},[
+      el('legend',{text:'更多測試帳號'}),
+      acctList,
+      el('button',{class:'btn sm',type:'button',onclick:()=>{ draft.moreAccounts.push({acc:'',pwd:'',memo:''}); drawAccts(); }},[ el('span',{html:ICON.plus}), el('span',{text:'加一組帳號'}) ]),
+      el('p',{class:'hint',text:'例：qatestpw23 / 密碼 / 09-23 新註冊、卡已驗證。整份資料會加密後才存。'}),
+    ]),
+    el('fieldset',{class:'group'},[
+      el('legend',{text:'測試進度'}),
+      el('div',{class:'form-grid'}, FIELDS.filter(f=>PROGRESS_KEYS.includes(f.k)).map(mk)),
+      el('div',{class:'rowbtns',style:'margin-top:10px'},[
+        el('button',{class:'btn sm',type:'button',text:'最後測試日設成今天',onclick:()=>{
+          const d=new Date(); inputs.lastTested.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        }}),
+      ]),
+    ]),
     el('div',{class:'form-grid'}, FIELDS.filter(f=>f.k==='note').map(mk)),
   ]);
 
@@ -776,7 +932,8 @@ function openEditor(site){
   const saveBtn = el('button',{class:'btn primary',text: isNew?'新增並儲存':'儲存'});
 
   const doSave = async ()=>{
-    for (const f of FIELDS) draft[f.k] = (inputs[f.k].value||'').trim();
+    for (const f of FIELDS) if (!f.list) draft[f.k] = (inputs[f.k].value||'').trim();
+    draft.moreAccounts = draft.moreAccounts.map(a=>({acc:(a.acc||'').trim(),pwd:(a.pwd||'').trim(),memo:(a.memo||'').trim()})).filter(a=>a.acc||a.pwd||a.memo);
     if (!draft.system || !draft.name){ errBox.textContent='系統和站名是必填的'; errBox.hidden=false; return; }
     for (const k of ['frontendUrl','boUrl']){
       if (draft[k] && !/^https?:\/\//i.test(draft[k])) draft[k] = 'https://' + draft[k];
@@ -965,6 +1122,13 @@ const GUESS = {
   boAccount:   ['bo account','bo帳號','後台帳號','admin account','bo user'],
   boPassword:  ['bo password','bo密碼','後台密碼','admin password'],
   note:        ['note','備註','remark','說明','comment','memo'],
+  testStage:   ['測試進度','進度','stage'],
+  testRound:   ['目前輪次','輪次','round'],
+  lastTested:  ['最後測試日','測試日','last tested'],
+  reportRef:   ['最新報告','報告','report'],
+  openIssues:  ['還沒修好的問題','未修','問題','issues'],
+  nextStep:    ['下一步','next'],
+  moreAccounts:['更多測試帳號','其他帳號','more accounts'],
 };
 function guessColumn(header, key){
   const h = String(header).toLowerCase().trim();
@@ -1023,7 +1187,11 @@ function showMapping(rows){
     if (picked.name == null && picked.frontendUrl == null){ toast('至少要對應「站名」或「前端網址」',true); return; }
     const imported = body.map(r=>{
       const o = { id:uid(), updatedAt:nowISO() };
-      for (const f of FIELDS) o[f.k] = picked[f.k] != null ? String(r[picked[f.k]] ?? '').trim() : '';
+      for (const f of FIELDS){
+        const raw = picked[f.k] != null ? String(r[picked[f.k]] ?? '').trim() : '';
+        o[f.k] = f.list ? textToAcct(raw) : raw;
+      }
+      if (o.testStage && !FIELDS.find(f=>f.k==='testStage').opts.includes(o.testStage)) o.testStage = '';
       if (!o.name) o.name = o.frontendUrl ? o.frontendUrl.replace(/^https?:\/\//,'').split('/')[0] : '(未命名)';
       if (!o.status) o.status = '使用中';
       for (const k of ['frontendUrl','boUrl']) if (o[k] && !/^https?:\/\//i.test(o[k])) o[k] = 'https://' + o[k];
@@ -1062,10 +1230,10 @@ function download(filename, text, mime='text/plain'){
   document.body.append(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(url), 1000);
 }
-function csvCell(v){ const s = String(v ?? ''); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; }
+function csvCell(v){ const s = String(v ?? ''); return /[",\n\r]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; }
 function exportCSV(){
   const head = FIELDS.map(f=>f.label).join(',');
-  const lines = (state.data.sites||[]).map(s=>FIELDS.map(f=>csvCell(s[f.k])).join(','));
+  const lines = (state.data.sites||[]).map(s=>FIELDS.map(f=>csvCell(f.list ? acctToText(s[f.k]) : s[f.k])).join(','));
   download(`測試站台-${new Date().toISOString().slice(0,10)}.csv`, '﻿'+[head,...lines].join('\n'), 'text/csv');
   toast('已下載 CSV');
 }
